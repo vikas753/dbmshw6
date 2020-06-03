@@ -122,16 +122,16 @@ RETURNS BOOL
 READS SQL DATA
 BEGIN
     DECLARE result_value                   BOOL;
-    DECLARE region_first_encounter VARCHAR(100);
-    DECLARE homeland_region        VARCHAR(100);
+    DECLARE num_homeland_encounter         INT;
     
-    SELECT region_name INTO region_first_encounter FROM
-    (SELECT  character1_name,character2_name,region_name,row_number() OVER (ORDER BY character1_name,character2_name,region_name) FROM lotr_first_encounter WHERE 
-    ((character1_name = input_character) OR (character2_name = input_character)) LIMIT 1) AS ordered_table_rows;
+    SELECT COUNT(*) INTO num_homeland_encounter FROM
+    (SELECT  character1_name,character2_name,region_name FROM lotr_first_encounter WHERE 
+    ((character1_name = input_character) OR (character2_name = input_character))) AS ordered_table_rows
+    INNER JOIN 
+    lotr_character WHERE ((character_name = input_character) AND (region_name = homeland))
+    GROUP BY region_name;
     
-    SELECT homeland INTO homeland_region FROM lotr_character WHERE character_name = input_character;
-    
-    IF region_first_encounter = homeland_region THEN SET result_value = TRUE;
+    IF num_homeland_encounter > 0 THEN SET result_value = TRUE;
     ELSE SET result_value = FALSE;
     END IF;
     
@@ -140,7 +140,7 @@ END $$
 
 DELIMITER ;
 
-SELECT home_region_encounter("elrond"); 
+SELECT home_region_encounter("gimli"); 
 
 /* Q.6 : Number of encounters of a region */
 
